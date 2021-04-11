@@ -67,28 +67,33 @@ public class ListViewCell extends ListCell<Node> {
 
                 on_button.setOnAction(
                         actionEvent ->{
+                            //disable button to visually tell user that the click is accepted and being process
+                            offAllButtonForThisListCellInstance();
                             //Send ON instruction via Socket to this node in network
                             Task nodeOnTask = new NodeOnOrOffTask(network,item.getIpAddress(),item.getSocketPort(),"/update?relay="+item.getPosition()+"&state=0",
                                     item, appServiceI, true);
                             var nodeWriteOnThread = new Thread(nodeOnTask, "node write thread");
                             nodeWriteOnThread.setDaemon(true);
                             nodeWriteOnThread.start();
-                            }
-                    );
+                        }
+                );
                 off_button.setOnAction(
-
-                            actionEvent ->{
-                                //Send off instruction via Socket to this node in network
-                                Task nodeOffTask = new NodeOnOrOffTask(network,item.getIpAddress(),item.getSocketPort(),"/update?relay="+item.getPosition()+"&state=1",
-                                        item, appServiceI, false);
-                                var nodeWriteOffThread = new Thread(nodeOffTask,"node write thread");
-                                nodeWriteOffThread.setDaemon(true);
-                                nodeWriteOffThread.start();
-                            }
-                    );
+                        actionEvent ->{
+                            //disable button to visually tell user that the click is accepted and being process
+                            offAllButtonForThisListCellInstance();
+                            //Send off instruction via Socket to this node in network
+                            Task nodeOffTask = new NodeOnOrOffTask(network,item.getIpAddress(),item.getSocketPort(),"/update?relay="+item.getPosition()+"&state=1",
+                                    item, appServiceI, false);
+                            var nodeWriteOffThread = new Thread(nodeOffTask,"node write thread");
+                            nodeWriteOffThread.setDaemon(true);
+                            nodeWriteOffThread.start();
+                        }
+                );
 
                 ping_button.setOnAction(
                         actionEvent ->{
+                            //disable button to visually tell user that the click is accepted and being process
+                            offAllButtonForThisListCellInstance();
                             Task pingTask = new NodePingTask(network,item, appServiceI);
                             var nodePingingThread = new Thread(pingTask,"node pinging thread");
                             nodePingingThread.setDaemon(true);
@@ -153,16 +158,16 @@ public class ListViewCell extends ListCell<Node> {
                 if (isOnline){
                     //System.out.println("node online");
                     node_status_indicator.setFill(Color.GREEN);
-                    item.setNodeStatus(NodeStatus.online);
-                    appServiceI.onlyUpdateNodeStatus(item);
                     node_status_label.setText("online");
+                    item.setNodeStatus(NodeStatus.online);
                 }else{
                     //System.out.println("node offline");
                     node_status_indicator.setFill(Color.RED);
-                    item.setNodeStatus(NodeStatus.offline);
-                    appServiceI.onlyUpdateNodeStatus(item);
                     node_status_label.setText("offline");
+                    item.setNodeStatus(NodeStatus.offline);
                 }
+                appServiceI.onlyUpdateNodeStatus(item);
+                onAllButtonForThisListCellInstance();
             });
             return isOnline;
         }
@@ -225,23 +230,61 @@ public class ListViewCell extends ListCell<Node> {
             Platform.runLater(()->{
                 if(result.equalsIgnoreCase("OK") && isForOn){
                     node_sate_indicator.setFill(Color.GREEN);
+                    node_sate_label.setText("on");
+                    //enable the ON button to accept subsequent click
+                    onAllButtonForThisListCellInstance();
                     item.setNodeState(NodeState.on);
                     appServiceI.onlyUpdateNodeState(item);
-                    node_sate_label.setText("on");
                 }
                 if(result.equalsIgnoreCase("FAILED") && isForOn){
                     node_sate_indicator.setFill(Color.RED);
                     node_sate_label.setText("off");
+                    onAllButtonForThisListCellInstance();
                 }
                 if(result.equalsIgnoreCase("OK") && !isForOn){
                     node_sate_indicator.setFill(Color.RED);
-                    item.setNodeState(NodeState.off);
-                    appServiceI.onlyUpdateNodeState(item);
                     node_sate_label.setText("off");
+                    onAllButtonForThisListCellInstance();
+                    item.setNodeState(NodeState.off);//enable the OFF button to accept subsequent click
+                    appServiceI.onlyUpdateNodeState(item);
+                }else{
+                    onAllButtonForThisListCellInstance();
                 }
+
+
             });
             return result;
         }
     }
 
+    /**
+     * <p>
+     *     To make a mass enable of buttons for this ListCell instance
+     *     This method will only affect the ListCell being interacted with by teh user and not all the ListCell
+     *     The method is final so as to make it Thread safe
+     *     The Idea is that, a user should not be able to perform two or more actions on a single node simultaneously
+     *     Doing the ON process, he cant off nor Ping the node until the ON process succeed or fail. And Vise versa for OFF process and PING
+     *     process
+     * </p>
+     */
+    public final void onAllButtonForThisListCellInstance(){
+        ping_button.setDisable(false);
+        on_button.setDisable(false);
+        off_button.setDisable(false);
+    }
+    /**
+     * <p>
+     *     To make a mass disable of buttons for this ListCell instance
+     *     This method will only affect the ListCell being interacted with by teh user and not all the ListCell
+     *     The method is final so as to make it Thread safe
+     *     The Idea is that, a user should not be able to perform two or more actions on a single node simultaneously
+     *     Doing the ON process, he cant off nor Ping the node until the ON process succeed or fail. And Vise versa for OFF process and PING
+     *     process
+     * </p>
+     */
+    public final void offAllButtonForThisListCellInstance(){
+        ping_button.setDisable(true);
+        on_button.setDisable(true);
+        off_button.setDisable(true);
+    }
 }

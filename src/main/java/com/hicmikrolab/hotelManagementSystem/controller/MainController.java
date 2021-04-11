@@ -59,6 +59,8 @@ public class MainController {
 
     ObservableList<Node> observableList = FXCollections.observableArrayList();
 
+    private boolean startUpMode = true;
+
 
 
 
@@ -92,54 +94,63 @@ public class MainController {
     @FXML
     public ScrollPane scroll_pane;
 
-   @FXML
-   public void initialize(){
-       node_table_menu_item.setOnAction(
-               actionEvent->{
-                   try{
-                       var stage = new Stage();
-                       var url = this.nodeViewFxml.getURL();
-                       FXMLLoader fxmlLoader = new FXMLLoader(url);
-                       fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
-                       Parent root = fxmlLoader.load();
-                       Scene scene = new Scene(root,900,600);
-                       stage.setTitle("Node Table");
-                       stage.setScene(scene);
-                       stage.setResizable(false);
-                       stage.show();
-                   } catch (IOException e) {
-                       e.printStackTrace();
-                   }
-               }
-       );
-       add_menu_item.setOnAction(
-               (actionEvent)->{
-                   try {
-                       var stage = new Stage();
-                       var url = this.addConfigurationViewFxml.getURL();
-                       FXMLLoader fxmlLoader = new FXMLLoader(url);
-                       fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
-                       Parent root = fxmlLoader.load();
-                       Scene scene = new Scene(root,600,150);
-                       stage.setTitle("Add Node");
-                       stage.setScene(scene);
-                       stage.setResizable(false);
-                       stage.show();
-                   } catch (IOException e) {
-                       e.printStackTrace();
-                   }
+    @FXML
+    public void initialize(){
+        node_table_menu_item.setOnAction(
+                actionEvent->{
+                    try{
+                        var stage = new Stage();
+                        var url = this.nodeViewFxml.getURL();
+                        FXMLLoader fxmlLoader = new FXMLLoader(url);
+                        fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
+                        Parent root = fxmlLoader.load();
+                        Scene scene = new Scene(root,900,600);
+                        stage.setTitle("Node Table");
+                        stage.setScene(scene);
+                        stage.setResizable(false);
+                        stage.show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+        add_menu_item.setOnAction(
+                (actionEvent)->{
+                    try {
+                        var stage = new Stage();
+                        var url = this.addConfigurationViewFxml.getURL();
+                        FXMLLoader fxmlLoader = new FXMLLoader(url);
+                        fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
+                        Parent root = fxmlLoader.load();
+                        Scene scene = new Scene(root,600,150);
+                        stage.setTitle("Add Node");
+                        stage.setScene(scene);
+                        stage.setResizable(false);
+                        stage.show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-               }
-       );
-       refresh_menu_item.setOnAction(
-               actionEvent -> populateListView()
-       );
-       populateListView();
+                }
+        );
+        refresh_menu_item.setOnAction(
+                actionEvent ->{
+                    var refreshPing = new Thread(new NonContinuousPingTask(),"refresh ping thread");
+                    refreshPing.setDaemon(true);
+                    refreshPing.start();
+                }
+        );
+        if(startUpMode){
+            var startupPing = new Thread(new NonContinuousPingTask(),"start up ping thread");
+            startupPing.setDaemon(true);
+            startupPing.start();
+            startUpMode = false;
+        }
 
-       //Commence AsynchronousPingTask on a worker Thread
-       var asyncPings = new Thread(new AsynchronousPingTask(appServiceI, networkInterface));
-       asyncPings.setDaemon(true);
-       asyncPings.start();
+        //Commence ContinuousPingTask on a worker Thread
+        var asyncPings = new Thread(new ContinuousPingTask(appServiceI, networkInterface),"routine ping thread");
+        asyncPings.setDaemon(true);
+        asyncPings.start();
     }
 
     public final void populateListView(){
@@ -166,15 +177,53 @@ public class MainController {
      *     class that have access to the UI views to be manipulated from a separate Thread that will run concurrently with UI Thread upon the occurrence of
      *     an action.
      *
+     *      The logic implemented in the call method is a startup pings of all registered nodes that are not flag deleted.
+     *      It then update the ListView after pinging all, reflecting the state of each Node on its corresponding ListVIewCell
+     * </p>
+     */
+    public class NonContinuousPingTask extends Task<Boolean>{
+
+        /**
+         * Invoked when the Task is executed, the call method must be overridden and
+         * implemented by subclasses. The call method actually performs the
+         * background thread logic. Only the updateProgress, updateMessage, updateValue and
+         * updateTitle methods of Task may be called from code within this method.
+         * Any other interaction with the Task from the background thread will result
+         * in runtime exceptions.
+         *
+         * @return The result of the background work, if any.
+         * @throws Exception an unhandled exception which occurred during the
+         *                   background operation
+         */
+        @Override
+        protected Boolean call() throws Exception {
+            pingJob();
+            Platform.runLater(()-> populateListView());
+            return true;
+        }
+    }
+
+    /**
+     * <p>
+     *     This class is created inner class to the <code>MainControler</code> class in other to have access to the <code>populateListView()</code> method
+     *     which populate the ListView on the UI Thread.
+     *
+     *     This class defines some logics that have to be performed concurrently with the UI Thread. Performing this logic in the UI Thread will freeze the
+     *     UI Thread.
+     *
+     *     The class then as well alter the UI SceneGraph using the <code>platform.runlater()</code>. Because of this reason this class resides within the
+     *     class that have access to the UI views to be manipulated from a separate Thread that will run concurrently with UI Thread upon the occurrence of
+     *     an action.
+     *
      *      The logic implemented in the call method is an infinite loop that periodically pings all registered nodes that are not flag deleted.
      *      It then update the ListView after pinging all, reflecting the state of each Node on its corresponding ListVIewCell
      * </p>
      */
-    public class AsynchronousPingTask extends Task<Void>{
+    public class ContinuousPingTask extends Task<Void>{
         private final AppServiceI appServiceI;
         private final NetworkInterface networkInterface;
 
-        public AsynchronousPingTask(AppServiceI appServiceI, NetworkInterface networkInterface) {
+        public ContinuousPingTask(AppServiceI appServiceI, NetworkInterface networkInterface) {
             this.appServiceI = appServiceI;
             this.networkInterface = networkInterface;
         }
@@ -196,17 +245,26 @@ public class MainController {
             while(true){
                 Thread.sleep(300000L); //Sleep for 5 Minute
                 //System.out.println("I am going to run ping test");
-                var nodes = appServiceI.findAllNode().stream().filter(node-> node.isDeleted()==false).collect(Collectors.toList());
-                for(var node : nodes){
-                    if(networkInterface.sendPingRequest(node.getIpAddress()))
-                        node.setNodeStatus(NodeStatus.online);
-                    else
-                        node.setNodeStatus(NodeStatus.offline);
-
-                    appServiceI.onlyUpdateNodeStatus(node);
-                }
+                pingJob();
                 //System.out.println("will refresh the MainView Now");
                 Platform.runLater(()-> populateListView());
+            }
+        }
+    }
+
+    /**
+     * This method reads all the nodes, iterate through the nodes and ping them one after the other, updating the node status for each node
+     */
+    public final void pingJob(){
+        var nodes = appServiceI.findAllNode().stream().filter(node-> node.isDeleted()==false).collect(Collectors.toList());
+        if(!nodes.isEmpty()){
+            for(var node : nodes){
+                if(networkInterface.sendPingRequest(node.getIpAddress()))
+                    node.setNodeStatus(NodeStatus.online);
+                else
+                    node.setNodeStatus(NodeStatus.offline);
+
+                appServiceI.onlyUpdateNodeStatus(node);
             }
         }
     }
