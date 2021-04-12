@@ -7,6 +7,7 @@ import com.hicmikrolab.hotelManagementSystem.entity.Node;
 import com.hicmikrolab.hotelManagementSystem.service.AppServiceI;
 import com.hicmikrolab.hotelManagementSystem.utility.ListViewCell;
 import com.hicmikrolab.hotelManagementSystem.utility.NetworkInterface;
+import com.hicmikrolab.hotelManagementSystem.utility.NodeState;
 import com.hicmikrolab.hotelManagementSystem.utility.NodeStatus;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -243,7 +244,7 @@ public class MainController {
         @Override
         protected Void call() throws Exception {
             while(true){
-                Thread.sleep(300000L); //Sleep for 5 Minute
+                Thread.sleep(60000L); //Sleep for 5 Minute
                 //System.out.println("I am going to run ping test");
                 pingJob();
                 //System.out.println("will refresh the MainView Now");
@@ -259,12 +260,22 @@ public class MainController {
         var nodes = appServiceI.findAllNode().stream().filter(node-> node.isDeleted()==false).collect(Collectors.toList());
         if(!nodes.isEmpty()){
             for(var node : nodes){
-                if(networkInterface.sendPingRequest(node.getIpAddress()))
+                if(networkInterface.sendPingRequest(node.getIpAddress())){
+                    //Request if the node is currently ON or OFF
+                    var result = networkInterface.httpClientOnOffChecker(node.getIpAddress(),node.getSocketPort(),"/update?status=1");
+                    if(result.equalsIgnoreCase("ACTIVE")){
+                        node.setNodeState(NodeState.on);
+                    }else if(result.equalsIgnoreCase("INACTIVE")){
+                            node.setNodeState(NodeState.off);
+                    }
                     node.setNodeStatus(NodeStatus.online);
-                else
+                }
+                else{
                     node.setNodeStatus(NodeStatus.offline);
+                    node.setNodeState(NodeState.off);
+                }
 
-                appServiceI.onlyUpdateNodeStatus(node);
+                appServiceI.updateStateAndStatus(node);
             }
         }
     }

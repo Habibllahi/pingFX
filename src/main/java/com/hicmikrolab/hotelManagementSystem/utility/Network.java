@@ -128,9 +128,9 @@ public class Network implements NetworkInterface {
         return isReadSuccessful;
     }
 
-
-    public String httpClientApproach(String ip, int port, String message){
+    public String httpClientRequestProcessor(String ip, int port, String message){
         String result = "FAILED";
+
         try{
             HttpClient httpClient = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_2)
@@ -151,12 +151,20 @@ public class Network implements NetworkInterface {
 
             result = response.thenApply(HttpResponse::body).get(5, TimeUnit.SECONDS);
 
-            //System.out.println(result);
+            System.out.println(result);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public String httpClientOnOffRequester(String ip, int port, String message){
+        return httpClientRequestProcessor(ip,port,message);
+    }
+
+    public String httpClientOnOffChecker(String ip, int port, String message){
+       return httpClientRequestProcessor(ip,port,message);
     }
 
 }

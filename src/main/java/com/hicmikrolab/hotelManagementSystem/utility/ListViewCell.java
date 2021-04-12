@@ -55,22 +55,27 @@ public class ListViewCell extends ListCell<Node> {
                 control_label.setText(item.getNodeName());
                 node_status_label.setText(item.getNodeStatus().name());
                 node_sate_label.setText(item.getNodeState().name());
-                if(item.getNodeStatus().name().equalsIgnoreCase(NodeStatus.online.name()))
+                if(item.getNodeStatus().name().equalsIgnoreCase(NodeStatus.online.name())){
                     node_status_indicator.setFill(Color.GREEN);
-                else
-                    node_status_indicator.setFill(Color.RED);
+                    node_status_label.setText(NodeStatus.online.name());
+                } else{
+                        node_status_indicator.setFill(Color.RED);
+                        node_status_label.setText(NodeStatus.offline.name());
+                }
 
-                if(item.getNodeState().name().equalsIgnoreCase(NodeState.on.name()))
+                if(item.getNodeState().name().equalsIgnoreCase(NodeState.on.name())){
                     node_sate_indicator.setFill(Color.GREEN);
-                else
-                    node_sate_indicator.setFill(Color.RED);
-
+                    node_sate_label.setText(NodeState.on.name());
+                } else{
+                        node_sate_indicator.setFill(Color.RED);
+                        node_sate_label.setText(NodeState.off.name());
+                }
                 on_button.setOnAction(
                         actionEvent ->{
                             //disable button to visually tell user that the click is accepted and being process
                             offAllButtonForThisListCellInstance();
                             //Send ON instruction via Socket to this node in network
-                            Task nodeOnTask = new NodeOnOrOffTask(network,item.getIpAddress(),item.getSocketPort(),"/update?relay="+item.getPosition()+"&state=0",
+                            Task nodeOnTask = new NodeOnOrOffTask(network,"/update?relay="+item.getPosition()+"&state=1",
                                     item, appServiceI, true);
                             var nodeWriteOnThread = new Thread(nodeOnTask, "node write thread");
                             nodeWriteOnThread.setDaemon(true);
@@ -82,7 +87,7 @@ public class ListViewCell extends ListCell<Node> {
                             //disable button to visually tell user that the click is accepted and being process
                             offAllButtonForThisListCellInstance();
                             //Send off instruction via Socket to this node in network
-                            Task nodeOffTask = new NodeOnOrOffTask(network,item.getIpAddress(),item.getSocketPort(),"/update?relay="+item.getPosition()+"&state=1",
+                            Task nodeOffTask = new NodeOnOrOffTask(network,"/update?relay="+item.getPosition()+"&state=0",
                                     item, appServiceI, false);
                             var nodeWriteOffThread = new Thread(nodeOffTask,"node write thread");
                             nodeWriteOffThread.setDaemon(true);
@@ -156,17 +161,29 @@ public class ListViewCell extends ListCell<Node> {
             //Modify the Scene Graph from this thread. This call will do the runnable code on the JavaFX Application Thread (UI Thread)
             Platform.runLater(()->{
                 if (isOnline){
-                    //System.out.println("node online");
+                    //Should a node be online, instantly request if such node is ON or OFF
+                    var result = network.httpClientOnOffChecker(item.getIpAddress(),item.getSocketPort(),"/update?status=1");
+                    if(result.equalsIgnoreCase("ACTIVE")){
+                        node_sate_indicator.setFill(Color.GREEN);
+                        node_sate_label.setText(NodeState.on.name());
+                        item.setNodeState(NodeState.on);
+                    }else if(result.equalsIgnoreCase("INACTIVE")){
+                            node_sate_indicator.setFill(Color.RED);
+                            node_sate_label.setText(NodeState.off.name());
+                            item.setNodeState(NodeState.off);
+                    }
                     node_status_indicator.setFill(Color.GREEN);
-                    node_status_label.setText("online");
+                    node_status_label.setText(NodeStatus.online.name());
                     item.setNodeStatus(NodeStatus.online);
+
                 }else{
-                    //System.out.println("node offline");
-                    node_status_indicator.setFill(Color.RED);
-                    node_status_label.setText("offline");
-                    item.setNodeStatus(NodeStatus.offline);
+                        //System.out.println("node offline");
+                        node_status_indicator.setFill(Color.RED);
+                        node_status_label.setText(NodeStatus.offline.name());
+                        item.setNodeStatus(NodeStatus.offline);
+                        item.setNodeState(NodeState.off);
                 }
-                appServiceI.onlyUpdateNodeStatus(item);
+                appServiceI.updateStateAndStatus(item);
                 onAllButtonForThisListCellInstance();
             });
             return isOnline;
@@ -193,17 +210,13 @@ public class ListViewCell extends ListCell<Node> {
 
         private final NetworkInterface network;
         private final String message;
-        private final String ipAddress;
-        private final int socketPort;
         private final Node item;
         private final AppServiceI appServiceI;
         private final boolean isForOn;
 
-        public NodeOnOrOffTask(NetworkInterface network, String ipAddress, int socketPort, String message, Node item, AppServiceI appServiceI, boolean isForOn) {
+        public NodeOnOrOffTask(NetworkInterface network,String message, Node item, AppServiceI appServiceI, boolean isForOn) {
             this.network = network;
             this.message = message;
-            this.ipAddress = ipAddress;
-            this.socketPort = socketPort;
             this.item = item;
             this.appServiceI = appServiceI;
             this.isForOn = isForOn;
@@ -223,35 +236,22 @@ public class ListViewCell extends ListCell<Node> {
          */
         @Override
         protected String call() throws Exception {
-            var result = network.httpClientApproach(ipAddress,socketPort,message);
+            var result = network.httpClientOnOffRequester(item.getIpAddress(),item.getSocketPort(),message);
             updateValue(result);
             updateMessage(result);
             //Modify the Scene Graph from this thread. This call will do the runnable code on the JavaFX Application Thread (UI Thread)
             Platform.runLater(()->{
                 if(result.equalsIgnoreCase("OK") && isForOn){
                     node_sate_indicator.setFill(Color.GREEN);
-                    node_sate_label.setText("on");
-                    //enable the ON button to accept subsequent click
-                    onAllButtonForThisListCellInstance();
+                    node_sate_label.setText(NodeState.on.name());
                     item.setNodeState(NodeState.on);
-                    appServiceI.onlyUpdateNodeState(item);
+                }else if(result.equalsIgnoreCase("OK") && !isForOn){
+                        node_sate_indicator.setFill(Color.RED);
+                        node_sate_label.setText(NodeState.off.name());
+                        item.setNodeState(NodeState.off);//enable the OFF button to accept subsequent click
                 }
-                if(result.equalsIgnoreCase("FAILED") && isForOn){
-                    node_sate_indicator.setFill(Color.RED);
-                    node_sate_label.setText("off");
-                    onAllButtonForThisListCellInstance();
-                }
-                if(result.equalsIgnoreCase("OK") && !isForOn){
-                    node_sate_indicator.setFill(Color.RED);
-                    node_sate_label.setText("off");
-                    onAllButtonForThisListCellInstance();
-                    item.setNodeState(NodeState.off);//enable the OFF button to accept subsequent click
-                    appServiceI.onlyUpdateNodeState(item);
-                }else{
-                    onAllButtonForThisListCellInstance();
-                }
-
-
+                appServiceI.onlyUpdateNodeState(item);
+                onAllButtonForThisListCellInstance();
             });
             return result;
         }

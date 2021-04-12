@@ -16,6 +16,8 @@ public interface NetworkInterface {
 
     boolean lowLevelWriteAndRead(String ip, int port, String message);
 
-    String httpClientApproach(String ip, int port, String message);
+    String httpClientOnOffRequester(String ip, int port, String message);
+
+    String httpClientOnOffChecker(String ip, int port, String message);
 
 }

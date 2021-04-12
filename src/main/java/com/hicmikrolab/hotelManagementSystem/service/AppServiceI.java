@@ -13,5 +13,6 @@ public interface AppServiceI {
     Node updateNode(Node node);
     Node onlyUpdateNodeStatus(Node node);
     Node onlyUpdateNodeState(Node node);
+    Node updateStateAndStatus(Node node);
 
 }

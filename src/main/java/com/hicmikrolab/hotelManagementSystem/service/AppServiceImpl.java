@@ -56,4 +56,14 @@ public class AppServiceImpl implements AppServiceI{
         }).orElseGet(()-> saveNode(node));
     }
 
+    @Override
+    public Node updateStateAndStatus(Node node) {
+        var existingNode = nodeRepoI.findById(node.getId());
+        return existingNode.map(closureNode -> {
+            closureNode.setNodeState(node.getNodeState());
+            closureNode.setNodeStatus(node.getNodeStatus());
+            return saveNode(closureNode);
+        }).orElseGet(()-> saveNode(node));
+    }
+
 }
