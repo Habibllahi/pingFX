@@ -16,7 +16,7 @@ import org.springframework.context.support.GenericApplicationContext;
 /**
  * com.hicmikrolab.hotelManagementSystem.JavaFxApplication is the entry point for
  * Hotel Management System as a JavaFX application. This class is bootstrap by
- * com.hicmikrolab.hotelManagementSystem.SpringBootBasedIoTHotelManagementJavaFXApp.
+ * com.hicmikrolab.hotelManagementSystem.PingJavaFXApp.
  */
 public class JavaFxApplication extends Application {
 
@@ -65,7 +65,7 @@ public class JavaFxApplication extends Application {
         };
 
         this.context = new SpringApplicationBuilder()
-                .sources(SpringBootBasedIoTHotelManagementJavaFXApp.class)// Add a source of the Application context
+                .sources(PingJavaFXApp.class)// Add a source of the Application context
                 .initializers(initializer) //Initialized all registered beans
                 .run(getParameters().getRaw().toArray(new String[0]));
     }

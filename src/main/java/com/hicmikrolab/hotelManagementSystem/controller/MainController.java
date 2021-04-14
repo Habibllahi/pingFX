@@ -62,9 +62,6 @@ public class MainController {
 
     private boolean startUpMode = true;
 
-
-
-
     @FXML
     public VBox root_view;
 
@@ -100,16 +97,7 @@ public class MainController {
         node_table_menu_item.setOnAction(
                 actionEvent->{
                     try{
-                        var stage = new Stage();
-                        var url = this.nodeViewFxml.getURL();
-                        FXMLLoader fxmlLoader = new FXMLLoader(url);
-                        fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
-                        Parent root = fxmlLoader.load();
-                        Scene scene = new Scene(root,900,600);
-                        stage.setTitle("Node Table");
-                        stage.setScene(scene);
-                        stage.setResizable(false);
-                        stage.show();
+                        toLaunchNodeTable();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -118,16 +106,7 @@ public class MainController {
         add_menu_item.setOnAction(
                 (actionEvent)->{
                     try {
-                        var stage = new Stage();
-                        var url = this.addConfigurationViewFxml.getURL();
-                        FXMLLoader fxmlLoader = new FXMLLoader(url);
-                        fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
-                        Parent root = fxmlLoader.load();
-                        Scene scene = new Scene(root,600,150);
-                        stage.setTitle("Add Node");
-                        stage.setScene(scene);
-                        stage.setResizable(false);
-                        stage.show();
+                          toLaunchAddMenuItem();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -152,6 +131,32 @@ public class MainController {
         var asyncPings = new Thread(new ContinuousPingTask(appServiceI, networkInterface),"routine ping thread");
         asyncPings.setDaemon(true);
         asyncPings.start();
+    }
+
+    private void toLaunchAddMenuItem() throws IOException{
+        var stage = new Stage();
+        var url = this.addConfigurationViewFxml.getURL();
+        FXMLLoader fxmlLoader = new FXMLLoader(url);
+        fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
+        Parent root = fxmlLoader.load();
+        Scene scene = new Scene(root,600,150);
+        stage.setTitle("Add Node");
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.show();
+    }
+
+    private void toLaunchNodeTable() throws IOException{
+        var stage = new Stage();
+        var url = this.nodeViewFxml.getURL();
+        FXMLLoader fxmlLoader = new FXMLLoader(url);
+        fxmlLoader.setControllerFactory(applicationContext::getBean);//This FXML Loader controller is set to use the Spring Application context instead
+        Parent root = fxmlLoader.load();
+        Scene scene = new Scene(root,900,600);
+        stage.setTitle("Node Table");
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.show();
     }
 
     public final void populateListView(){

@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * </p>
  */
 @SpringBootApplication
-public class SpringBootBasedIoTHotelManagementJavaFXApp {
+public class PingJavaFXApp {
 
 	/**
 	 * <p>

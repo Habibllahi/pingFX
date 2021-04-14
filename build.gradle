@@ -19,8 +19,9 @@ plugins {
 	id 'org.openjfx.javafxplugin' version '0.0.9'
 }
 
+
 apply plugin: 'com.gluonhq.client-gradle-plugin'
-mainClassName='com.hicmikrolab.hotelManagementSystem.SpringBootBasedIoTHotelManagementJavaFXApp'
+mainClassName='com.hicmikrolab.hotelManagementSystem.PingJavaFXApp'
 
 group = 'com.hicmikrolab'
 version = '0.0.1-SNAPSHOT'
@@ -55,7 +56,16 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
+jar{
+	manifest{
+		attributes(
+				'Class-Path': configurations.runtimeClasspath.files.collect{it.getName()}.join(' '),
+				'Start-Class': 'com.hicmikrolab.hotelManagementSystem.PingJavaFXApp',
+				'Main-Class': 'org.springframework.boot.loader.JarLauncher'
 
+		)
+	}
+}
 test {
 	useJUnitPlatform()
 }
