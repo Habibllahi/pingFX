@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="root_view" maxHeight="600.0" maxWidth="1000.0" minHeight="600.0" minWidth="1000.0" prefHeight="600.0" prefWidth="1000.0" styleClass="root-node" stylesheets="@MainViewStyle.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hicmikrolab.hotelManagementSystem.controller.MainController">
+  <children>
+    <MenuBar fx:id="menu_bar" prefHeight="600.0" prefWidth="1000.0" VBox.vgrow="NEVER">
+         <menus>
+            <Menu fx:id="configure_menu" mnemonicParsing="false" text="Configure">
+              <items>
+                <MenuItem fx:id="add_menu_item" mnemonicParsing="false" text="Add" />
+                  <MenuItem fx:id="refresh_menu_item" mnemonicParsing="false" text="Refresh" />
+              </items>
+            </Menu>
+            <Menu fx:id="view_menu" mnemonicParsing="false" text="View">
+              <items>
+                <MenuItem fx:id="node_table_menu_item" mnemonicParsing="false" text="Node Table" />
+              </items>
+            </Menu>
+         </menus>
+    </MenuBar>
+    <AnchorPane fx:id="control_pane" maxHeight="565.0" maxWidth="1000.0" minHeight="565.0" minWidth="1000.0" prefHeight="565.0" prefWidth="1000.0" styleClass="anchor_pane" VBox.vgrow="ALWAYS">
+         <children>
+            <ScrollPane id="scroll_pane" fx:id="scroll_pane" hbarPolicy="NEVER" maxHeight="565.0" maxWidth="1000.0" minHeight="565.0" minWidth="1000.0" prefHeight="565.0" prefWidth="1000.0" styleClass="list_view">
+               <content>
+                  <ListView fx:id="list_view" maxHeight="565.0" maxWidth="1000.0" minHeight="565.0" minWidth="1000.0" prefHeight="565.0" prefWidth="1000.0" styleClass="list_view" />
+               </content>
+            </ScrollPane>
+         </children></AnchorPane>
+  </children>
+</VBox>

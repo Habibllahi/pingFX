@@ -1,0 +1,71 @@
+buildscript {
+	repositories {
+		maven {
+			url "https://nexus.gluonhq.com/nexus/content/repositories/releases"
+		}
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath 'com.gluonhq:client-gradle-plugin:0.1.38'
+	}
+}
+
+plugins {
+	id 'org.springframework.boot' version '2.4.4'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'application'
+	id 'org.openjfx.javafxplugin' version '0.0.9'
+}
+
+
+apply plugin: 'com.gluonhq.client-gradle-plugin'
+mainClassName='com.hicmikrolab.hotelManagementSystem.PingJavaFXApp'
+
+group = 'com.hicmikrolab'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+
+repositories {
+	mavenCentral()
+	maven {
+		url 'https://nexus.gluonhq.com/nexus/content/repositories/releases'
+	}
+}
+javafx {
+	version = '11.0.2'
+	modules = [ 'javafx.controls', 'javafx.fxml','javafx.base','javafx.graphics','javafx.media']
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.apache.derby:derby'
+	implementation 'org.apache.httpcomponents:httpclient'
+	implementation 'org.controlsfx:controlsfx:11.0.0'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+jar{
+	manifest{
+		attributes(
+				'Class-Path': configurations.runtimeClasspath.files.collect{it.getName()}.join(' '),
+				'Start-Class': 'com.hicmikrolab.hotelManagementSystem.PingJavaFXApp',
+				'Main-Class': 'org.springframework.boot.loader.JarLauncher'
+
+		)
+	}
+}
+test {
+	useJUnitPlatform()
+}

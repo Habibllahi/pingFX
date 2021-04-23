@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableView?>
+
+<ScrollPane fx:id="root_pane" hbarPolicy="NEVER" maxHeight="600.0" maxWidth="900.0" minHeight="600.0" minWidth="900.0" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hicmikrolab.hotelManagementSystem.controller.NodeController">
+   <content>
+      <TableView id="node_table_view" fx:id="node_table_view" editable="true" maxHeight="600.0" maxWidth="900.0" minHeight="600.0" minWidth="900.0" prefHeight="600.0" prefWidth="900.0" styleClass="node_table_view_class" stylesheets="@NodeViewStyle.css" />
+   </content>
+</ScrollPane>
